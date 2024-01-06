@@ -1,5 +1,7 @@
-package com.example.clone.service;
+package com.example.clone.common;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,5 +27,21 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         return errors;
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public Map<String, String> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        Map<String, String> errorDetails = new HashMap<>();
+        errorDetails.put("error", "Database error: " + ex.getMessage());
+        return errorDetails;
+    }
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public Map<String, String> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        Map<String, String> errorDetails = new HashMap<>();
+        errorDetails.put("error", ex.getMessage());
+        return errorDetails;
     }
 }

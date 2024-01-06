@@ -1,8 +1,8 @@
 package com.example.clone.config;
 
-import com.example.clone.service.JwtAuthFilter;
+import com.example.clone.repository.UserInfoRepository;
+import com.example.clone.common.JwtAuthFilter;
 import com.example.clone.service.UserInfoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,10 +13,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import com.example.clone.service.JwtService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -24,18 +24,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthFilter authFilter;
-
-
     @Bean
-    public UserDetailsService userDetailsService() {
-        return new UserInfoService();
-    }
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserInfoRepository repository, PasswordEncoder encoder, UserInfoService userInfoService,JwtService jwtService) throws Exception {
+        JwtAuthFilter authFilter = new JwtAuthFilter(jwtService, userInfoService);
 
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken").permitAll()
@@ -43,18 +35,18 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests().requestMatchers("/auth/user/**").authenticated()
                 .and()
-                .authorizeHttpRequests().requestMatchers("/comments/add").authenticated()
+                .authorizeHttpRequests().requestMatchers("/comment").authenticated()
                 .and()
-                .authorizeHttpRequests().requestMatchers("/post/**").authenticated()
+                .authorizeHttpRequests().requestMatchers("/posts/**").authenticated()
                 .and()
-                .authorizeHttpRequests().requestMatchers("/user/**").authenticated()
+                .authorizeHttpRequests().requestMatchers("/users/**").authenticated()
                 .and()
                 .authorizeHttpRequests().requestMatchers("/auth/admin/**").authenticated()
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .authenticationProvider(authenticationProvider())
+                .authenticationProvider(authenticationProvider(repository, encoder, userInfoService))
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -66,9 +58,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(UserInfoRepository repository, PasswordEncoder encoder, UserInfoService userInfoService) {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setUserDetailsService(userInfoService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }
@@ -79,4 +71,4 @@ public class SecurityConfig {
     }
 
 
-} 
+}

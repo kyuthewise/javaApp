@@ -1,4 +1,4 @@
-package com.example.clone.service;
+package com.example.clone.common;
 
 import com.example.clone.model.UserInfo;
 import com.example.clone.repository.UserInfoRepository;

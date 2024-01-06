@@ -1,4 +1,5 @@
 package com.example.clone.controller;
+import com.example.clone.model.PostResponse;
 import com.example.clone.service.PostService;
 import com.example.clone.model.Post;
 import jakarta.validation.Valid;
@@ -8,48 +9,60 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
-import java.util.Map;
-
-
 @RestController
-@RequestMapping("/post")
+@RequestMapping("/posts")
 public class PostController {
-
-
     private PostService postService;
-
     @Autowired
-
     public PostController(PostService postService){
         this.postService = postService;
     }
-
-    @PostMapping("/create")
+    @PostMapping
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<Post> createPost(@Valid @RequestBody Post post) {
-        Post createdPost = postService.createPost(post);
-        return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
+    public ResponseEntity<?> createPost(@Valid @RequestBody Post post) {
+        PostResponse response = postService.createPost(post);
+        if(response.isSuccess()) {
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
+        else{
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(response.getMessage());
+        }
     }
-
-    @PostMapping("/like")
+    @PostMapping("/{id}/like")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<Post> setLike(@RequestParam int id) {
-        Post postLiked = postService.setLike(id);
-        return new ResponseEntity<>(postLiked, HttpStatus.CREATED);
+    public ResponseEntity<?> setLike(@PathVariable int id) {
+        PostResponse response = postService.setLike(id);
+        if(response.isSuccess()) {
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
+        else{
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(response.getMessage());
+        }
     }
-    @DeleteMapping("/delete")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<String> handleDelete(@RequestParam int id) {
-        Post postDeleted = postService.handleDelete(id);
-        return ResponseEntity.ok("Post deleted successfully");
+    public ResponseEntity<?> handleDelete(@PathVariable int id) {
+        PostResponse response = postService.handleDelete(id);
+        if(response.isSuccess()) {
+            return ResponseEntity
+                    .status(HttpStatus.ACCEPTED)
+                    .body(response.getMessage());
+        }
+        else{
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(response.getMessage());
+        }
     }
-
-    @GetMapping("getPost")
+    @GetMapping
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<?> getPost() {
         try{
-        List<Map<String, Object>> postList  = postService.getPost();
+        PostResponse postList  = postService.getPost();
         return ResponseEntity.ok().body(postList);
     }
         catch(Exception e){
@@ -57,6 +70,4 @@ public class PostController {
 
         }
     }
-
-
 }

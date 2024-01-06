@@ -1,4 +1,4 @@
-package com.example.clone.service;
+package com.example.clone.model;
 
 import com.example.clone.model.UserInfo;
 import org.springframework.security.core.GrantedAuthority;
@@ -58,4 +58,4 @@ public class UserInfoDetails implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-} 
+}

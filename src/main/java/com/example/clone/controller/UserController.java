@@ -1,6 +1,6 @@
 package com.example.clone.controller;
 
-import com.example.clone.service.AuthRequest;
+import com.example.clone.model.AuthRequest;
 import com.example.clone.model.UserInfo;
 import com.example.clone.service.JwtService;
 import com.example.clone.service.UserInfoService;
@@ -58,4 +58,4 @@ public class UserController {
         }
     }
 
-} 
+}

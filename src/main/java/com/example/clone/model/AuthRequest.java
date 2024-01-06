@@ -1,4 +1,4 @@
-package com.example.clone.service;
+package com.example.clone.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

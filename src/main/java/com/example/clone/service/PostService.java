@@ -1,64 +1,73 @@
 package com.example.clone.service;
-
-
+import com.example.clone.common.GetAuth;
 import com.example.clone.model.Post;
+import com.example.clone.model.PostResponse;
 import com.example.clone.model.UserInfo;
 import org.springframework.stereotype.Service;
-import com.example.clone.repository.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import com.example.clone.repository.UserInfoRepository;
-
 import java.util.*;
 
 @Service
 
 public class PostService {
 
-    private final PostRepository postRepository;
-    private final GetAuth getAuth;
-    private final UserInfoRepository userRepository;
+    private final PostDataService postDataService;
 
-    @Autowired
-    public PostService(PostRepository postRepository, UserInfoRepository userRepository, GetAuth getAuth) {
-        this.postRepository = postRepository;
-        this.userRepository = userRepository;
+    private final GetAuth getAuth;
+
+
+    public PostService(PostDataService postDataService, GetAuth getAuth) {
+        this.postDataService = postDataService;
         this.getAuth = getAuth;
     }
 
-    @Autowired
-    UserInfoRepository userInfoRepository;
-    public Post createPost(Post post) {
+    public PostResponse createPost(Post post) {
 
 
         UserInfo currentUser = getAuth.getCurrentUser();
 
         post.setUser(currentUser);
-        return postRepository.save(post);
+        try {
+            Post savedPost = postDataService.savePost(post);
+            return new PostResponse(true, "Post created successfully", savedPost);
+        } catch (Exception e) {
+            // Handle exception and return an appropriate response
+            return new PostResponse(false, "Failed to create post", (Post) null);
+        }
     }
-    public Post handleDelete(int id){
+
+    public PostResponse handleDelete(int id){
 
        UserInfo currentUser = getAuth.getCurrentUser();
 
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+        Post post = postDataService.findPostById(id).orElse(null);
+        if(post == null){
+            return new PostResponse(false, "cannot find post", (Post) null);
+        }
+
 
         if (post.getUser().getId() != currentUser.getId()) {
-            throw new RuntimeException("Unauthorized to delete this post");
+            return new PostResponse(false, "Unauthorized to delete this post", (Post) null);
         }
-        postRepository.deleteById(id);
-        return postRepository.save(post);
+        postDataService.deletePost(id);
+
+        return new PostResponse(true, "Post deleted successfully", (Post) null);
 
     }
-    public Post setLike(int id){
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+    public PostResponse setLike(int id){
+        Post post = postDataService.findPostById(id).orElse(null);
+        if(post == null){
+            return new PostResponse(false, "cannot find post", (Post) null);
+        }
+
+
         post.setLikeCount(post.getLikeCount() + 1);
-        return postRepository.save(post);
+        Post savedPost = postDataService.savePost(post);
+        return new PostResponse(true, "Post liked successfully", savedPost);
     }
 
-    public List<Map<String, Object>> getPost() throws Exception {
+    public PostResponse getPost(){
         List<Post> currentUserPosts = getAuth.getCurrentUser().getPosts();
-        List<Map<String, Object>> PostList = new ArrayList<>();
+        List<Map<String, Object>> postList = new ArrayList<>();
 
         for (Post post : currentUserPosts) {
             Map<String, Object> postMap = new HashMap<>();
@@ -67,8 +76,9 @@ public class PostService {
             postMap.put("date", post.getDate());
             postMap.put("comments", post.getComments());
             postMap.put("name", post.getUser().getName());
-            PostList.add(postMap);
+            postList.add(postMap);
         }
-        return PostList;    }
+        return new PostResponse(true, "Posts retrieved successfully", postList);
+    }
 
 }

@@ -1,11 +1,13 @@
-package com.example.clone.service;
+package com.example.clone.common;
 
 import com.example.clone.service.JwtService;
 import com.example.clone.service.UserInfoService;
+import io.jsonwebtoken.Jwt;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,11 +22,15 @@ import java.io.IOException;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtService jwtService;
 
-    @Autowired
+    private final JwtService jwtService;
     private UserInfoService userDetailsService;
+    public JwtAuthFilter(JwtService jwtService,UserInfoService userDetailsService)
+    {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+    }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -46,4 +52,4 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
-} 
+}
